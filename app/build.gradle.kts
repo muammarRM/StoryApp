@@ -59,5 +59,7 @@ dependencies {
     implementation(libs.logging.interceptor)
     implementation(libs.gson)
 
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+
     implementation (libs.glide)
 }

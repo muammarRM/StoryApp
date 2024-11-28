@@ -4,6 +4,8 @@ import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -11,11 +13,13 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.dicoding.storyapp.R
 import com.dicoding.storyapp.databinding.ActivityMainBinding
 import com.dicoding.storyapp.view.ViewModelFactory
 import com.dicoding.storyapp.view.adapter.StoryAdapter
 import com.dicoding.storyapp.view.addstory.AddStoryActivity
 import com.dicoding.storyapp.view.storydetail.StoryDetailActivity
+import com.dicoding.storyapp.view.welcome.WelcomeActivity
 
 class MainActivity : AppCompatActivity() {
     private val viewModel by viewModels<MainViewModel> {
@@ -29,12 +33,21 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(false)
+        supportActionBar?.setDisplayShowTitleEnabled(true)
+
+        viewModel.getSession().observe(this) { user ->
+            if (!user.isLogin) {
+                startActivity(Intent(this, WelcomeActivity::class.java))
+                finish()
+            }
+        }
         setupView()
         setupRecyclerView()
         playAnimation()
         observeStoryList()
         binding.fabAddStory.setOnClickListener {
-            // Navigasi ke AddStoryActivity untuk menambah cerita baru
             startActivity(Intent(this, AddStoryActivity::class.java))
         }
         viewModel.refreshStories()
@@ -50,7 +63,6 @@ class MainActivity : AppCompatActivity() {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN
             )
         }
-        supportActionBar?.hide()
     }
 
     private fun setupRecyclerView() {
@@ -59,12 +71,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeStoryList() {
-        // Observasi data cerita
         viewModel.stories.observe(this) { stories ->
             if (stories != null && stories.isNotEmpty()) {
                 adapter = StoryAdapter(stories) { story ->
                     val detailIntent = Intent(this, StoryDetailActivity::class.java).apply {
-                        putExtra("STORY_ID", story.id) // Kirimkan ID cerita
+                        putExtra("STORY_ID", story.id)
                     }
                     startActivity(detailIntent)
                 }
@@ -77,12 +88,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Observasi loading
         viewModel.isLoading.observe(this) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
-
-        // Observasi error
         viewModel.errorMessage.observe(this) { errorMessage ->
             if (!errorMessage.isNullOrEmpty()) {
                 showErrorToast(errorMessage)
@@ -94,14 +102,24 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_logout -> {
+                viewModel.logout()
+                return true
+            }
+            else -> return super.onOptionsItemSelected(item)
+        }
+    }
     private fun playAnimation() {
-
-        // Menambahkan animasi fade-in untuk RecyclerView saat data dimuat
         binding.storyRecyclerView.alpha = 0f
         binding.storyRecyclerView.animate().alpha(1f).duration = 500
 
-        // Animasi FAB (FloatingActionButton) muncul dari bawah
         val fabAnim = ObjectAnimator.ofFloat(binding.fabAddStory, View.TRANSLATION_Y, 300f, 0f).apply {
             duration = 300
         }

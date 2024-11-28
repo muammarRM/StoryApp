@@ -7,8 +7,8 @@ import com.dicoding.storyapp.data.repository.AuthRepository
 import com.dicoding.storyapp.data.repository.StoryRepository
 import com.dicoding.storyapp.data.repository.UserRepository
 import com.dicoding.storyapp.di.Injection
+import com.dicoding.storyapp.view.addstory.AddStoryViewModel
 import com.dicoding.storyapp.view.login.LoginViewModel
-import com.dicoding.storyapp.view.logout.LogoutViewModel
 import com.dicoding.storyapp.view.main.MainViewModel
 import com.dicoding.storyapp.view.register.RegisterViewModel
 import com.dicoding.storyapp.view.storydetail.StoryDetailViewModel
@@ -22,9 +22,7 @@ class ViewModelFactory(
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
-            modelClass.isAssignableFrom(LogoutViewModel::class.java) -> {
-                LogoutViewModel(userRepository) as T
-            }
+
             modelClass.isAssignableFrom(LoginViewModel::class.java) -> {
                 LoginViewModel(userRepository, authRepository) as T
             }
@@ -32,10 +30,13 @@ class ViewModelFactory(
                 RegisterViewModel(authRepository) as T
             }
             modelClass.isAssignableFrom(MainViewModel::class.java) -> {
-                MainViewModel(storyRepository) as T
+                MainViewModel(storyRepository, userRepository) as T
             }
             modelClass.isAssignableFrom(StoryDetailViewModel::class.java) -> {
                 StoryDetailViewModel(storyRepository) as T
+            }
+            modelClass.isAssignableFrom(AddStoryViewModel::class.java) -> {
+                AddStoryViewModel(storyRepository) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: " + modelClass.name)
         }

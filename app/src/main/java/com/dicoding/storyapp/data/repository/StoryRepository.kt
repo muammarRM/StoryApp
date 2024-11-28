@@ -1,11 +1,13 @@
 package com.dicoding.storyapp.data.repository
 
 import com.dicoding.storyapp.data.pref.UserPreference
+import com.dicoding.storyapp.data.remote.response.AddNewStoryResponse
 import com.dicoding.storyapp.data.remote.response.DetailStoryResponse
 import com.dicoding.storyapp.data.remote.response.StoryResponse
 import com.dicoding.storyapp.data.remote.retrofit.ApiService
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 
-// StoryRepository.kt
 class StoryRepository(
     private val apiService: ApiService,
     private val userPreference: UserPreference
@@ -25,6 +27,13 @@ class StoryRepository(
 
     suspend fun getStoryDetail(storyId: String): DetailStoryResponse {
         return apiService.getStoryDetail(storyId)
+    }
+
+    suspend fun addNewStory(
+        description: RequestBody,
+        photo: MultipartBody.Part
+    ): AddNewStoryResponse {
+        return apiService.addNewStory(description, photo)
     }
 
     suspend fun getAllStories(): StoryResponse {

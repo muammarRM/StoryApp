@@ -7,6 +7,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -33,7 +35,9 @@ class LoginActivity : AppCompatActivity() {
         setupView()
         setupAction()
         playAnimation()
+        setupValidation()
         observeLoginStatus()
+        observeLoadingState()
     }
 
     private fun setupView() {
@@ -58,17 +62,16 @@ class LoginActivity : AppCompatActivity() {
         }
     }
     private fun observeLoginStatus() {
-        // Observasi status pendaftaran untuk sukses atau error
         viewModel.loginStatus.observe(this, Observer { status ->
             when (status) {
                 "success" -> {
-                    if (!isFinishing && !isDestroyed) { // Pastikan Activity masih hidup
+                    if (!isFinishing && !isDestroyed) {
                         showSuccessDialog()
                     }
                 }
                 "error" -> {
                     viewModel.loginErrorMessage.observe(this, Observer { errorMessage ->
-                        if (!isFinishing && !isDestroyed) { // Pastikan Activity masih hidup
+                        if (!isFinishing && !isDestroyed) {
                             showErrorDialog(errorMessage)
                         }
                     })
@@ -80,7 +83,6 @@ class LoginActivity : AppCompatActivity() {
     private fun showSuccessDialog() {
         if (isDialogShown) return
         isDialogShown = true
-        // Tampilkan AlertDialog untuk sukses
         AlertDialog.Builder(this).apply {
             setTitle("Yeah!")
             setMessage("Anda berhasil login. Sudah tidak sabar untuk belajar ya?")
@@ -98,12 +100,10 @@ class LoginActivity : AppCompatActivity() {
     private fun showErrorDialog(errorMessage: String?) {
         if (isDialogShown) return
         isDialogShown = true
-        // Tampilkan AlertDialog untuk error
         AlertDialog.Builder(this).apply {
             setTitle("Oops!")
             setMessage("Terjadi kesalahan: $errorMessage")
             setPositiveButton("Tutup") { dialog, _ ->
-                // Menutup dialog setelah tombol OK diklik
                 dialog.dismiss()
             }
             create()
@@ -113,10 +113,9 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun resetDialogState() {
-        // Setelah beberapa detik, reset flag isDialogShown agar dialog bisa muncul lagi
         Handler(Looper.getMainLooper()).postDelayed({
             isDialogShown = false
-        }, 500) // 500ms delay, bisa disesuaikan
+        }, 500)
     }
 
     private fun playAnimation() {
@@ -152,5 +151,48 @@ class LoginActivity : AppCompatActivity() {
             startDelay = 100
         }.start()
     }
+    private fun setupValidation() {
+        // Validasi email
+        binding.emailEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {}
 
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s != null && !android.util.Patterns.EMAIL_ADDRESS.matcher(s).matches()) {
+                    binding.edLoginEmail.error = "Email tidak valid"
+                } else {
+                    binding.edLoginEmail.error = null
+                }
+            }
+
+            override fun afterTextChanged(editable: Editable?) {}
+        })
+
+        // Validasi password
+        binding.passwordEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s != null && s.length < 8) {
+                    binding.edLoginPassword.error = "Password tidak boleh kurang dari 8 karakter"
+                } else {
+                    binding.edLoginPassword.error = null
+                }
+            }
+
+            override fun afterTextChanged(editable: Editable?) {}
+        })
+    }
+    private fun observeLoadingState() {
+        viewModel.isLoading.observe(this, Observer { isLoading ->
+            showLoading(isLoading)
+        })
+    }
+
+    private fun showLoading(isLoading: Boolean) {
+        if (isLoading) {
+            binding.progressBar.visibility = View.VISIBLE
+        } else {
+            binding.progressBar.visibility = View.GONE
+        }
+    }
 }

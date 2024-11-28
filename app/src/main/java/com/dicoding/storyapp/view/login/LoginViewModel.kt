@@ -22,9 +22,13 @@ class LoginViewModel(
     private val _loginErrorMessage = MutableLiveData<String?>()
     val loginErrorMessage: MutableLiveData<String?> = _loginErrorMessage
 
-    // Fungsi untuk login
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> get() = _isLoading
+
     fun login(email: String, password: String) {
         viewModelScope.launch {
+            _isLoading.value = true
+            _loginErrorMessage.value = null
             try {
                 val response = authRepository.loginUser(email, password)
 

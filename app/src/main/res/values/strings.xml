@@ -18,4 +18,12 @@
     <string name="story_description">Story description</string>
     <string name="image">Image</string>
     <string name="login_image">login image</string>
+    <string name="tidak_ada_cerita_untuk_ditampilkan">Tidak ada cerita untuk ditampilkan</string>
+    <string name="galeri">Galeri</string>
+    <string name="kamera">Kamera</string>
+    <string name="masukkan_deskripsi">Masukkan Deskripsi</string>
+    <string name="post_cerita">Post Cerita</string>
+    <string name="empty_image_warning">Silakan masukkan berkas gambar terlebih dahulu.</string>
+    <string name="log_out">Log Out</string>
+    <string name="main_activity">Main Activity</string>
 </resources>

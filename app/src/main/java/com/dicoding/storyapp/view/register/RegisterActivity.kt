@@ -6,6 +6,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -32,6 +34,7 @@ class RegisterActivity : AppCompatActivity() {
         setupAction()
         playAnimation()
 
+        setupValidation()
         observeRegisterStatus()
     }
 
@@ -53,23 +56,23 @@ class RegisterActivity : AppCompatActivity() {
             val name = binding.nameEditText.text.toString()
             val email = binding.emailEditText.text.toString()
             val password = binding.passwordEditText.text.toString()
-
+            showLoading(true)
             viewModel.register(name, email, password)
         }
     }
 
     private fun observeRegisterStatus() {
-        // Observasi status pendaftaran untuk sukses atau error
         viewModel.registerStatus.observe(this, Observer { status ->
+            showLoading(false)
             when (status) {
                 "success" -> {
-                    if (!isFinishing && !isDestroyed) { // Pastikan Activity masih hidup
+                    if (!isFinishing && !isDestroyed) {
                         showSuccessDialog()
                     }
                 }
                 "error" -> {
                     viewModel.registerErrorMessage.observe(this, Observer { errorMessage ->
-                        if (!isFinishing && !isDestroyed) { // Pastikan Activity masih hidup
+                        if (!isFinishing && !isDestroyed) {
                             showErrorDialog(errorMessage)
                         }
                     })
@@ -102,7 +105,6 @@ class RegisterActivity : AppCompatActivity() {
             setTitle("Oops!")
             setMessage("Terjadi kesalahan: $errorMessage")
             setPositiveButton("Tutup") { dialog, _ ->
-                // Menutup dialog setelah tombol OK diklik
                 dialog.dismiss()
             }
             create()
@@ -111,16 +113,14 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
-    // Menambahkan kontrol untuk menghentikan animasi setelah registrasi
     fun stopAnimation() {
-        binding.imageView.animate().cancel() // Berhenti animasi
+        binding.imageView.animate().cancel()
     }
 
     private fun resetDialogState() {
-        // Setelah beberapa detik, reset flag isDialogShown agar dialog bisa muncul lagi
         Handler(Looper.getMainLooper()).postDelayed({
             isDialogShown = false
-        }, 500) // 500ms delay, bisa disesuaikan
+        }, 500)
     }
     private fun playAnimation() {
         ObjectAnimator.ofFloat(binding.imageView, View.TRANSLATION_X, -30f, 30f).apply {
@@ -135,13 +135,13 @@ class RegisterActivity : AppCompatActivity() {
         val nameEditTextLayout =
             ObjectAnimator.ofFloat(binding.edRegisterName, View.ALPHA, 1f).setDuration(100)
         val emailTextView =
-            ObjectAnimator.ofFloat(binding.edRegisterEmail, View.ALPHA, 1f).setDuration(100)
+            ObjectAnimator.ofFloat(binding.emailTextView, View.ALPHA, 1f).setDuration(100)
         val emailEditTextLayout =
-            ObjectAnimator.ofFloat(binding.emailEditTextLayout, View.ALPHA, 1f).setDuration(100)
+            ObjectAnimator.ofFloat(binding.edRegisterEmail, View.ALPHA, 1f).setDuration(100)
         val passwordTextView =
-            ObjectAnimator.ofFloat(binding.edRegisterPassword, View.ALPHA, 1f).setDuration(100)
+            ObjectAnimator.ofFloat(binding.passwordTextView, View.ALPHA, 1f).setDuration(100)
         val passwordEditTextLayout =
-            ObjectAnimator.ofFloat(binding.passwordEditTextLayout, View.ALPHA, 1f).setDuration(100)
+            ObjectAnimator.ofFloat(binding.edRegisterPassword, View.ALPHA, 1f).setDuration(100)
         val signup = ObjectAnimator.ofFloat(binding.signupButton, View.ALPHA, 1f).setDuration(100)
 
 
@@ -158,5 +158,42 @@ class RegisterActivity : AppCompatActivity() {
             )
             startDelay = 100
         }.start()
+    }
+
+    private fun setupValidation() {
+        binding.emailEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s != null && !android.util.Patterns.EMAIL_ADDRESS.matcher(s).matches()) {
+                    binding.edRegisterEmail.error = "Email tidak valid"
+                } else {
+                    binding.edRegisterEmail.error = null
+                }
+            }
+
+            override fun afterTextChanged(editable: Editable?) {}
+        })
+
+        binding.passwordEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s != null && s.length < 8) {
+                    binding.edRegisterPassword.error = "Password tidak boleh kurang dari 8 karakter"
+                } else {
+                    binding.edRegisterPassword.error = null
+                }
+            }
+
+            override fun afterTextChanged(editable: Editable?) {}
+        })
+    }
+    private fun showLoading(isLoading: Boolean) {
+        if (isLoading) {
+            binding.progressBar.visibility = View.VISIBLE
+        } else {
+            binding.progressBar.visibility = View.GONE
+        }
     }
 }

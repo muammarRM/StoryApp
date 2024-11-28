@@ -28,7 +28,6 @@ class StoryDetailActivity : AppCompatActivity() {
             if (storyDetail != null) {
                 binding.tvDetailName.text = storyDetail.story?.name
                 binding.tvDetailDescription.text = storyDetail.story?.description
-                // Memuat gambar menggunakan library seperti Glide atau Picasso
                 Glide.with(this)
                     .load(storyDetail.story?.photoUrl)
                     .into(binding.ivDetailPhoto)
