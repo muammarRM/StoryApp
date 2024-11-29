@@ -26,6 +26,13 @@ class MainViewModel(private val repository: StoryRepository, private val userRep
             _isLoading.value = true
             _errorMessage.value = null
             try {
+                val token = userRepository.getToken()
+                if (token.isNullOrEmpty()) {
+                    _errorMessage.value = "Silakan login terlebih dahulu"
+                    userRepository.logout()
+                    return@launch
+                }
+
                 val response = repository.getAllStories()
                 if (response.listStory.isNotEmpty()) {
                     _stories.value = response.listStory

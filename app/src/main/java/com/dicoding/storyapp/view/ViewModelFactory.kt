@@ -50,7 +50,7 @@ class ViewModelFactory(
             if (INSTANCE == null) {
                 synchronized(ViewModelFactory::class.java) {
                     INSTANCE = ViewModelFactory(
-                        Injection.provideUserPreferences(context),
+                        Injection.provideUserRepository(context),
                         Injection.provideStoryRepository(context),
                         Injection.provideAuthRepository()
                     )

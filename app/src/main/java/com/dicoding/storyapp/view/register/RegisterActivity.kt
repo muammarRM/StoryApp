@@ -17,6 +17,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.dicoding.storyapp.databinding.ActivityRegisterBinding
 import com.dicoding.storyapp.view.ViewModelFactory
+import com.dicoding.storyapp.view.mycustomview.MyButton
+import com.dicoding.storyapp.view.mycustomview.MyEditText
 
 class RegisterActivity : AppCompatActivity() {
     private lateinit var binding: ActivityRegisterBinding
@@ -25,17 +27,27 @@ class RegisterActivity : AppCompatActivity() {
     }
     private var isDialogShown = false
 
+    private lateinit var myButton: MyButton
+    private lateinit var nameEditText: MyEditText
+    private lateinit var emailEditText: MyEditText
+    private lateinit var passwordEditText: MyEditText
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        myButton = binding.signupButton
+        nameEditText = binding.edRegisterName
+        emailEditText = binding.edRegisterEmail
+        passwordEditText = binding.edRegisterPassword
         setupView()
         setupAction()
         playAnimation()
 
         setupValidation()
         observeRegisterStatus()
+        setMyButtonEnable()
     }
 
     private fun setupView() {
@@ -53,14 +65,66 @@ class RegisterActivity : AppCompatActivity() {
 
     private fun setupAction() {
         binding.signupButton.setOnClickListener {
-            val name = binding.nameEditText.text.toString()
-            val email = binding.emailEditText.text.toString()
-            val password = binding.passwordEditText.text.toString()
+            val name = binding.edRegisterName.text.toString()
+            val email = binding.edRegisterEmail.text.toString()
+            val password = binding.edRegisterPassword.text.toString()
             showLoading(true)
             viewModel.register(name, email, password)
         }
     }
+    private fun setupValidation() {
+        nameEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s != null && s.isEmpty()) {
+                    nameEditText.error = "Nama tidak boleh kosong"
+                } else {
+                    nameEditText.error = null
+                }
+                setMyButtonEnable()
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+        emailEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s != null && !android.util.Patterns.EMAIL_ADDRESS.matcher(s).matches()) {
+                    emailEditText.error = "Email tidak valid"
+                } else {
+                    emailEditText.error = null
+                }
+                setMyButtonEnable()
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        passwordEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s != null && s.length < 8) {
+                    passwordEditText.error = "Password tidak boleh kurang dari 8 karakter"
+                } else {
+                    passwordEditText.error = null
+                }
+                setMyButtonEnable()
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+    }
+    private fun setMyButtonEnable() {
+        val name = nameEditText.text.toString()
+        val email = emailEditText.text.toString()
+        val password = passwordEditText.text.toString()
+        myButton.isEnabled = name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() &&
+                android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() &&
+                password.length >= 8
+    }
     private fun observeRegisterStatus() {
         viewModel.registerStatus.observe(this, Observer { status ->
             showLoading(false)
@@ -87,7 +151,7 @@ class RegisterActivity : AppCompatActivity() {
         // Tampilkan AlertDialog untuk sukses
         AlertDialog.Builder(this).apply {
             setTitle("Yeah!")
-            setMessage("Akun dengan ${binding.emailEditText.text} sudah jadi nih. Yuk, login dan belajar coding.")
+            setMessage("Akun dengan ${binding.edRegisterEmail.text} sudah jadi nih. Yuk, login dan belajar coding.")
             setPositiveButton("Lanjut") { _, _ ->
                 finish()
             }
@@ -160,35 +224,7 @@ class RegisterActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun setupValidation() {
-        binding.emailEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {}
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s != null && !android.util.Patterns.EMAIL_ADDRESS.matcher(s).matches()) {
-                    binding.edRegisterEmail.error = "Email tidak valid"
-                } else {
-                    binding.edRegisterEmail.error = null
-                }
-            }
-
-            override fun afterTextChanged(editable: Editable?) {}
-        })
-
-        binding.passwordEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s != null && s.length < 8) {
-                    binding.edRegisterPassword.error = "Password tidak boleh kurang dari 8 karakter"
-                } else {
-                    binding.edRegisterPassword.error = null
-                }
-            }
-
-            override fun afterTextChanged(editable: Editable?) {}
-        })
-    }
     private fun showLoading(isLoading: Boolean) {
         if (isLoading) {
             binding.progressBar.visibility = View.VISIBLE

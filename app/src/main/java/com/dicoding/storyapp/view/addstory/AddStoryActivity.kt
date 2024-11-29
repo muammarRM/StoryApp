@@ -7,6 +7,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -21,6 +23,8 @@ import com.dicoding.storyapp.databinding.ActivityAddStoryBinding
 import com.dicoding.storyapp.utils.getImageUri
 import com.dicoding.storyapp.view.ViewModelFactory
 import com.dicoding.storyapp.view.main.MainActivity
+import com.dicoding.storyapp.view.mycustomview.MyButton
+import com.dicoding.storyapp.view.mycustomview.MyEditText
 
 class AddStoryActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddStoryBinding
@@ -29,6 +33,10 @@ class AddStoryActivity : AppCompatActivity() {
     }
     private var isDialogShown = false
     private var currentImageUri: Uri? = null
+
+
+    private lateinit var addButton: MyButton
+    private lateinit var descriptionEditText: MyEditText
 
     private val requestPermissionLauncher =
         registerForActivityResult(
@@ -51,15 +59,24 @@ class AddStoryActivity : AppCompatActivity() {
         binding = ActivityAddStoryBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        addButton = binding.buttonAdd
+        descriptionEditText = binding.edAddDescription
+
         if (!allPermissionsGranted()) {
             requestPermissionLauncher.launch(REQUIRED_PERMISSION)
         }
 
+        setupButtonListeners()
+        setupValidation()
+        observePostStatus()
+    }
+
+    private fun setupButtonListeners() {
         binding.btnGallery.setOnClickListener { startGallery() }
         binding.btnCamera.setOnClickListener { startCamera() }
-        binding.buttonAdd.setOnClickListener {
+        addButton.setOnClickListener {
             currentImageUri?.let { uri ->
-                val description = binding.edAddDescription.text.toString()
+                val description = descriptionEditText.text.toString()
                 if (description.isNotEmpty()) {
                     viewModel.addNewStory(description, uri, this)
                 } else {
@@ -67,9 +84,25 @@ class AddStoryActivity : AppCompatActivity() {
                 }
             } ?: showToast("Please select an image first.")
         }
-        observePostStatus()
     }
 
+    private fun setupValidation() {
+        addButton.isEnabled = false
+        descriptionEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                setAddButtonEnable()
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+    }
+
+    private fun setAddButtonEnable() {
+        val description = descriptionEditText.text.toString()
+        addButton.isEnabled = description.isNotEmpty() && currentImageUri != null
+    }
     private fun startGallery() {
         launcherGallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }

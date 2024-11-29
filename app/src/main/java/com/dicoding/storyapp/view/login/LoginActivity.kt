@@ -19,6 +19,8 @@ import androidx.lifecycle.Observer
 import com.dicoding.storyapp.databinding.ActivityLoginBinding
 import com.dicoding.storyapp.view.ViewModelFactory
 import com.dicoding.storyapp.view.main.MainActivity
+import com.dicoding.storyapp.view.mycustomview.MyButton
+import com.dicoding.storyapp.view.mycustomview.MyEditText
 
 class LoginActivity : AppCompatActivity() {
     private val viewModel by viewModels<LoginViewModel> {
@@ -27,10 +29,18 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private var isDialogShown = false
 
+    private lateinit var myButton: MyButton
+    private lateinit var emailEditText: MyEditText
+    private lateinit var passwordEditText: MyEditText
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        myButton = binding.loginButton
+        emailEditText = binding.edLoginEmail
+        passwordEditText = binding.edLoginPassword
 
         setupView()
         setupAction()
@@ -38,6 +48,7 @@ class LoginActivity : AppCompatActivity() {
         setupValidation()
         observeLoginStatus()
         observeLoadingState()
+        setMyButtonEnable()
     }
 
     private fun setupView() {
@@ -55,11 +66,51 @@ class LoginActivity : AppCompatActivity() {
 
     private fun setupAction() {
         binding.loginButton.setOnClickListener {
-            val email = binding.emailEditText.text.toString()
-            val password = binding.passwordEditText.text.toString()
+            val email = binding.edLoginEmail.text.toString()
+            val password = binding.edLoginPassword.text.toString()
 
             viewModel.login(email, password)
         }
+    }
+    private fun setupValidation() {
+        // Email validation
+        emailEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s != null && !android.util.Patterns.EMAIL_ADDRESS.matcher(s).matches()) {
+                    emailEditText.error = "Email tidak valid"
+                } else {
+                    emailEditText.error = null
+                }
+                setMyButtonEnable()
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        // Password validation
+        passwordEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s != null && s.length < 8) {
+                    passwordEditText.error = "Password tidak boleh kurang dari 8 karakter"
+                } else {
+                    passwordEditText.error = null
+                }
+                setMyButtonEnable()
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+    }
+    private fun setMyButtonEnable() {
+        val email = emailEditText.text.toString()
+        val password = passwordEditText.text.toString()
+        myButton.isEnabled = email.isNotEmpty() && password.isNotEmpty() &&
+                android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() &&
+                password.length >= 8
     }
     private fun observeLoginStatus() {
         viewModel.loginStatus.observe(this, Observer { status ->
@@ -151,37 +202,7 @@ class LoginActivity : AppCompatActivity() {
             startDelay = 100
         }.start()
     }
-    private fun setupValidation() {
-        // Validasi email
-        binding.emailEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {}
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s != null && !android.util.Patterns.EMAIL_ADDRESS.matcher(s).matches()) {
-                    binding.edLoginEmail.error = "Email tidak valid"
-                } else {
-                    binding.edLoginEmail.error = null
-                }
-            }
-
-            override fun afterTextChanged(editable: Editable?) {}
-        })
-
-        // Validasi password
-        binding.passwordEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s != null && s.length < 8) {
-                    binding.edLoginPassword.error = "Password tidak boleh kurang dari 8 karakter"
-                } else {
-                    binding.edLoginPassword.error = null
-                }
-            }
-
-            override fun afterTextChanged(editable: Editable?) {}
-        })
-    }
     private fun observeLoadingState() {
         viewModel.isLoading.observe(this, Observer { isLoading ->
             showLoading(isLoading)

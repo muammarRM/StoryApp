@@ -38,7 +38,9 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setDisplayShowTitleEnabled(true)
 
         viewModel.getSession().observe(this) { user ->
-            if (!user.isLogin) {
+            if (user.isLogin) {
+                // User is logged in, do nothing
+            } else {
                 startActivity(Intent(this, WelcomeActivity::class.java))
                 finish()
             }
@@ -46,11 +48,12 @@ class MainActivity : AppCompatActivity() {
         setupView()
         setupRecyclerView()
         playAnimation()
+        viewModel.refreshStories()
         observeStoryList()
         binding.fabAddStory.setOnClickListener {
             startActivity(Intent(this, AddStoryActivity::class.java))
         }
-        viewModel.refreshStories()
+
     }
 
     private fun setupView() {
@@ -107,6 +110,10 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.refreshStories()
+    }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_logout -> {

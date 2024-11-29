@@ -7,22 +7,30 @@ import com.dicoding.storyapp.data.remote.retrofit.ApiConfig
 import com.dicoding.storyapp.data.repository.AuthRepository
 import com.dicoding.storyapp.data.repository.StoryRepository
 import com.dicoding.storyapp.data.repository.UserRepository
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 
 object Injection {
-    fun provideUserPreferences(context: Context) : UserRepository {
-        val pref = UserPreference.getInstance(context.dataStore)
-        return UserRepository.getInstance(pref)
+    fun provideApiConfig(): ApiConfig {
+        return ApiConfig
     }
+
+    fun provideUserRepository(context: Context): UserRepository {
+        val pref = UserPreference.getInstance(context.dataStore)
+        val apiConfig = provideApiConfig()
+        return UserRepository.getInstance(pref, apiConfig)
+    }
+
     fun provideAuthRepository(): AuthRepository {
-        val apiService = ApiConfig.getApiService()
+        val apiService = ApiConfig.getApiService("") // Empty token for auth endpoints
         return AuthRepository(apiService)
     }
+
     fun provideStoryRepository(context: Context): StoryRepository {
-        val pref = UserPreference.getInstance(context.dataStore)
-        val user = runBlocking { pref.getSession().first() }
-        val apiService = ApiConfig.getApiService(user.token)
-        return StoryRepository.getInstance(apiService, pref)
+        val userRepository = provideUserRepository(context)
+        val apiConfig = provideApiConfig()
+
+        return StoryRepository.getInstance(
+            userRepository,
+            apiConfig
+        )
     }
 }
