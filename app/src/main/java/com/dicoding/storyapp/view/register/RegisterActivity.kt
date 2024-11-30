@@ -6,8 +6,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -45,9 +43,12 @@ class RegisterActivity : AppCompatActivity() {
         setupAction()
         playAnimation()
 
-        setupValidation()
         observeRegisterStatus()
         setMyButtonEnable()
+        nameEditText.isValid.observe(this, Observer { setMyButtonEnable() })
+        emailEditText.isValid.observe(this, Observer { setMyButtonEnable() })
+        passwordEditText.isValid.observe(this, Observer { setMyButtonEnable() })
+
     }
 
     private fun setupView() {
@@ -72,58 +73,8 @@ class RegisterActivity : AppCompatActivity() {
             viewModel.register(name, email, password)
         }
     }
-    private fun setupValidation() {
-        nameEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s != null && s.isEmpty()) {
-                    nameEditText.error = "Nama tidak boleh kosong"
-                } else {
-                    nameEditText.error = null
-                }
-                setMyButtonEnable()
-            }
-
-            override fun afterTextChanged(s: Editable?) {}
-        })
-        emailEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s != null && !android.util.Patterns.EMAIL_ADDRESS.matcher(s).matches()) {
-                    emailEditText.error = "Email tidak valid"
-                } else {
-                    emailEditText.error = null
-                }
-                setMyButtonEnable()
-            }
-
-            override fun afterTextChanged(s: Editable?) {}
-        })
-
-        passwordEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s != null && s.length < 8) {
-                    passwordEditText.error = "Password tidak boleh kurang dari 8 karakter"
-                } else {
-                    passwordEditText.error = null
-                }
-                setMyButtonEnable()
-            }
-
-            override fun afterTextChanged(s: Editable?) {}
-        })
-    }
     private fun setMyButtonEnable() {
-        val name = nameEditText.text.toString()
-        val email = emailEditText.text.toString()
-        val password = passwordEditText.text.toString()
-        myButton.isEnabled = name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() &&
-                android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() &&
-                password.length >= 8
+        myButton.isEnabled = nameEditText.isValid.value == true && emailEditText.isValid.value == true && passwordEditText.isValid.value == true
     }
     private fun observeRegisterStatus() {
         viewModel.registerStatus.observe(this, Observer { status ->
@@ -148,7 +99,6 @@ class RegisterActivity : AppCompatActivity() {
     private fun showSuccessDialog() {
         if (isDialogShown) return
         isDialogShown = true
-        // Tampilkan AlertDialog untuk sukses
         AlertDialog.Builder(this).apply {
             setTitle("Yeah!")
             setMessage("Akun dengan ${binding.edRegisterEmail.text} sudah jadi nih. Yuk, login dan belajar coding.")
@@ -164,7 +114,6 @@ class RegisterActivity : AppCompatActivity() {
     private fun showErrorDialog(errorMessage: String?) {
         if (isDialogShown) return
         isDialogShown = true
-        // Tampilkan AlertDialog untuk error
         AlertDialog.Builder(this).apply {
             setTitle("Oops!")
             setMessage("Terjadi kesalahan: $errorMessage")

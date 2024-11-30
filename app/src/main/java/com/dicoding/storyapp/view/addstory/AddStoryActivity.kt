@@ -7,8 +7,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -67,8 +65,9 @@ class AddStoryActivity : AppCompatActivity() {
         }
 
         setupButtonListeners()
-        setupValidation()
+        setMyButtonEnable()
         observePostStatus()
+        descriptionEditText.isValid.observe(this, Observer { setMyButtonEnable() })
     }
 
     private fun setupButtonListeners() {
@@ -86,22 +85,8 @@ class AddStoryActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupValidation() {
-        addButton.isEnabled = false
-        descriptionEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                setAddButtonEnable()
-            }
-
-            override fun afterTextChanged(s: Editable?) {}
-        })
-    }
-
-    private fun setAddButtonEnable() {
-        val description = descriptionEditText.text.toString()
-        addButton.isEnabled = description.isNotEmpty() && currentImageUri != null
+    private fun setMyButtonEnable() {
+        addButton.isEnabled = descriptionEditText.isValid.value == true
     }
     private fun startGallery() {
         launcherGallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))

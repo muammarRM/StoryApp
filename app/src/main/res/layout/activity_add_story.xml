@@ -58,6 +58,7 @@
         android:inputType="textMultiLine"
         android:padding="16dp"
         android:scrollbars="vertical"
+        app:android_inputType="4"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btnContainer" />

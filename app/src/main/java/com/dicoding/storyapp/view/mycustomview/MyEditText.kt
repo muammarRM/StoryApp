@@ -6,10 +6,13 @@ import android.graphics.drawable.Drawable
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
+import android.util.Patterns
 import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.dicoding.storyapp.R
 
 class MyEditText @JvmOverloads constructor(
@@ -18,27 +21,58 @@ class MyEditText @JvmOverloads constructor(
 
     private var clearButtonImage: Drawable
     private var customHint: String
+    private var inputType: Int = 0
+    private var _isValid = MutableLiveData(false)
+    val isValid: LiveData<Boolean> get() = _isValid
+
     init {
         val attributes = context.obtainStyledAttributes(attrs, R.styleable.MyEditText)
         customHint = attributes.getString(R.styleable.MyEditText_customHint) ?: ""
+        inputType = attributes.getInt(R.styleable.MyEditText_android_inputType, 0)
         attributes.recycle()
+
         clearButtonImage = ContextCompat.getDrawable(context, R.drawable.ic_close_black_24dp) as Drawable
 
-        // Menambahkan aksi kepada clear button
         setOnTouchListener(this)
 
-        // Menambahkan aksi ketika ada perubahan text akan memunculkan clear button
+        setupTextWatcher()
+    }
+
+    private fun setupTextWatcher() {
         addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
-            }
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                 if (s.toString().isNotEmpty()) showClearButton() else hideClearButton()
+                validateInput(s.toString())
             }
 
-            override fun afterTextChanged(s: Editable) {
-            }
+            override fun afterTextChanged(s: Editable) {}
         })
+    }
+
+    private fun validateInput(text: String) {
+        error = when {
+            text.isEmpty() -> {
+                when (inputType) {
+                    INPUT_TYPE_NAME -> "Nama tidak boleh kosong"
+                    INPUT_TYPE_EMAIL -> "Email tidak boleh kosong"
+                    INPUT_TYPE_PASSWORD -> "Password tidak boleh kosong"
+                    INPUT_TYPE_DESCRIPTION -> "Deskripsi tidak boleh kosong"
+                    else -> null
+                }.also { _isValid.value = false }
+            }
+            inputType == INPUT_TYPE_EMAIL && !Patterns.EMAIL_ADDRESS.matcher(text).matches() -> {
+                "Email tidak valid".also { _isValid.value = false }
+            }
+            inputType == INPUT_TYPE_PASSWORD && text.length < 8 -> {
+                "Password tidak boleh kurang dari 8 karakter".also { _isValid.value = false }
+            }
+            else -> {
+                _isValid.value = true
+                null
+            }
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -97,4 +131,16 @@ class MyEditText @JvmOverloads constructor(
         }
         return false
     }
+
+
+//    fun isValid(): Boolean {
+//        return isValid
+//    }
+    companion object {
+        const val INPUT_TYPE_NAME = 1
+        const val INPUT_TYPE_EMAIL = 2
+        const val INPUT_TYPE_PASSWORD = 3
+        const val INPUT_TYPE_DESCRIPTION = 4
+    }
+
 }

@@ -7,8 +7,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -45,10 +43,11 @@ class LoginActivity : AppCompatActivity() {
         setupView()
         setupAction()
         playAnimation()
-        setupValidation()
         observeLoginStatus()
         observeLoadingState()
-        setMyButtonEnable()
+
+        emailEditText.isValid.observe(this, Observer { setMyButtonEnable() })
+        passwordEditText.isValid.observe(this, Observer { setMyButtonEnable() })
     }
 
     private fun setupView() {
@@ -72,45 +71,9 @@ class LoginActivity : AppCompatActivity() {
             viewModel.login(email, password)
         }
     }
-    private fun setupValidation() {
-        // Email validation
-        emailEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s != null && !android.util.Patterns.EMAIL_ADDRESS.matcher(s).matches()) {
-                    emailEditText.error = "Email tidak valid"
-                } else {
-                    emailEditText.error = null
-                }
-                setMyButtonEnable()
-            }
-
-            override fun afterTextChanged(s: Editable?) {}
-        })
-
-        // Password validation
-        passwordEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s != null && s.length < 8) {
-                    passwordEditText.error = "Password tidak boleh kurang dari 8 karakter"
-                } else {
-                    passwordEditText.error = null
-                }
-                setMyButtonEnable()
-            }
-
-            override fun afterTextChanged(s: Editable?) {}
-        })
-    }
     private fun setMyButtonEnable() {
-        val email = emailEditText.text.toString()
-        val password = passwordEditText.text.toString()
-        myButton.isEnabled = email.isNotEmpty() && password.isNotEmpty() &&
-                android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() &&
-                password.length >= 8
+        myButton.isEnabled = emailEditText.isValid.value == true && passwordEditText.isValid.value == true
     }
     private fun observeLoginStatus() {
         viewModel.loginStatus.observe(this, Observer { status ->
